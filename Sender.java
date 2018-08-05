@@ -16,11 +16,13 @@ import crawler.Utils.CustomExceptions.InvalidURLException;
 import crawler.Utils.CustomExceptions.InvalidURLException;
 import crawler.Utils.CustomExceptions.PoolOverFlowException;
 import crawler.http.Request;
+import crawler.http.Response;
 
-public class Sender extends Producer<InputStream> implements HttpRequestable {
+public class Sender extends Producer<Response> implements HttpRequestable {
     private RequestPool pool;
     private HttpURLConnection conn;
     private InputStream input;
+    private String url;
 
     public Sender(RequestPool pool) {
         this.pool = pool; 
@@ -42,13 +44,14 @@ public class Sender extends Producer<InputStream> implements HttpRequestable {
      * 当请求成功后，通过这个方法获取返回的数据
      */
     @Override
-    public InputStream toConsume() {
-        return input;
+    public Response toConsume() {
+        return new Response(url, conn.getContentLength(), conn.getContentType(), 1024, input);
     }
 
     @Override
     public void get(Request req, int timeout) throws IOException {
         String queryString = req.getQueryString();
+        url = req.getURL();
         try {
             if (queryString == "") {
                 prepareParams(req, "GET", timeout);
@@ -77,7 +80,8 @@ public class Sender extends Producer<InputStream> implements HttpRequestable {
 
     @Override
     public void post(Request req, int timeout) throws IOException {
-        HttpURLConnection conn = req.getConnection();
+        conn = req.getConnection();
+        url = req.getURL();
         conn.setDoOutput(true);
         conn.setDoInput(true);
         try(

@@ -1,5 +1,6 @@
 package crawler.models;
 
+import crawler.Utils.CustomExceptions.NoPathFoundException;
 import crawler.http.Request;
 
 import java.io.IOException;
@@ -12,13 +13,13 @@ public class CustomInterface {
     }
 
     @FunctionalInterface
-    abstract interface HttpParserable<E1, E2> {
+    public static abstract interface HttpParserable {
         public int bufferSize = 1024;
 
-        public abstract void parse();
+        public abstract void parse() throws NoPathFoundException;
     }
 
-    abstract interface Storeable {
+    public static abstract interface Storeable {
         public abstract void store();
 
         public abstract void storeInDB();

@@ -2,15 +2,16 @@ package crawler;
 
 import static crawler.Utils.Pools.RequestPool;
 import crawler.impl.Sender;
-import crawler.http.Request;
+import crawler.impl.Handler;
 import crawler.http.Response;
+import crawler.http.Request;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-public class SenderTest {
-    public static String testUrl = "https://www.baidu.com";
+public class HandlerTest {
+    public static String testUrl = "http://mm.chinasareview.com/wp-content/uploads/2017a/04/18/01.jpg";
 
     public static void main(String[] args) throws Exception {
         Request testReq = new Request(testUrl);
@@ -29,24 +30,11 @@ public class SenderTest {
         Sender p = new Sender(pool);
         p.get(5 * 1000);
 
-        // htmlTest(p.toConsume().getInputStream());
         Response r = p.toConsume();
-        System.out.println(r.getContentType());
-        System.out.println(r.getContentLength());
-    }
-
-    public static void htmlTest(InputStream input) {
-        String result = "";
-        try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(input, "utf-8"));
-        ) {
-            String line;
-            while ((line = in.readLine()) != null) {
-                result += "\n" + line;
-            }
-            System.out.println(result);
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+        // System.out.println(r.getContentLength());
+        // System.out.println(r.getContentType().indexOf("image"));
+        Handler handler = new Handler(p.toConsume());
+        handler.setPath("/Users/Heweitao/Desktop/SelfCoding/java/crawler");
+        handler.parse();
     }
 }

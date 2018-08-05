@@ -1,7 +1,9 @@
 package crawler.models;
 
-abstract class Consumer <E>{
+public abstract class Consumer <E>{
     private E input;
+
+    public Consumer() {}
 
     public Consumer(E input) {
         this.input = input;

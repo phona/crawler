@@ -28,4 +28,14 @@ public class CustomExceptions {
             super(t);
         }
     }
+
+    public static class NoPathFoundException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public NoPathFoundException() {}
+
+        public NoPathFoundException(Throwable t) {
+            super(t);
+        }
+    }
 }
