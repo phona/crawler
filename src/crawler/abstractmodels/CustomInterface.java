@@ -1,9 +1,11 @@
 package crawler.abstractmodels;
 
 import crawler.http.Request;
+import crawler.http.Response;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public class CustomInterface {
     public abstract interface HttpRequestable {
@@ -27,7 +29,7 @@ public class CustomInterface {
         void storeAsFile(String storePath);
     }
 
-    public static interface CustomRunable {
-        void run();
+    public static interface CustomParser {
+        Response run(Response e);
     }
 }

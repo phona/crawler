@@ -1,41 +1,56 @@
 package crawler.util;
 
-import crawler.abstractmodels.CustomInterface.CustomRunable;
 import crawler.http.Request;
 import crawler.http.Response;
 import crawler.impl.Handler;
 import crawler.impl.Sender;
 import crawler.util.CustomExceptions.PoolOverFlowException;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+
+import static crawler.Settings.*;
+import static crawler.abstractmodels.CustomInterface.*;
+import static crawler.util.CustomExceptions.*;
 
 public class Pools {
     /**
      * @category Pools
      */
     public static class Pool <E>{
-        private ArrayDeque<E> arr;
+        private ArrayDeque<E> pool;
         private final int size;
 
         public Pool(int size) {
-            this.arr = new ArrayDeque<>(size);
+            this.pool = new ArrayDeque<>(size);
             this.size = size;
         }
 
+        public ArrayDeque<E> getPool() {
+            return pool;
+        }
+
         public int getSize() {
-            return arr.size();
+            return pool.size();
         }
 
         public synchronized void add(E e) throws PoolOverFlowException {
-            if (this.arr.size() < size) {
-                this.arr.add(e);
+            if (this.pool.size() < size) {
+                this.pool.add(e);
             } else {
                 throw new PoolOverFlowException();
             }
         }
 
-        public synchronized E get() {
-            return this.arr.poll();
+        public synchronized E get() throws PoolNotSufficientException {
+            if (pool.size() > 0) {
+                return this.pool.poll();
+            } else {
+                throw new PoolNotSufficientException();
+            }
         };
     }
 
@@ -47,30 +62,13 @@ public class Pools {
         public RequestPool(int size) {
             super(size);
         }
-
-        public synchronized Request get() {
-            try {
-                return get();
-            } catch (IndexOutOfBoundsException ex) {
-                return null;
-            }
-        }
-
-        public synchronized void push(Request req) throws PoolOverFlowException {
-            if (getSize() < getSize()) {
-                add(req);
-            } else {
-                throw new PoolOverFlowException("The pool is full, can push item anymore.");
-            }
-        }
     }
 
     /**
      * 用于生产者与消费者之间的通信
      */
     public static class JobPool extends Pool<Response> {
-        private Sender sender;
-        private Handler handler;
+        private RequestPool requestPool;
         private Thread[] senders;
         private Thread[] handlers;
 
@@ -82,34 +80,96 @@ public class Pools {
             super(size);
         }
 
-        public void setPeers(Sender sender, Handler handler) {
-            this.sender = sender;
-            this.handler = handler;
+        public void initialize(Pools.RequestPool requestPool) {
+            this.requestPool = requestPool;
+            initSenders();
         }
 
-        public void initSenders(int size, CustomRunable runnable) {
-            System.out.println("Setting Sender size is " + size + ".");
-            senders = new Thread[size];
+        private void initSenders() {
+            System.out.println("Setting Sender size is " + requests + ".");
+            senders = new Thread[requests];
 
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < requests; i++) {
                 senders[i] = new Thread(new Runnable() {
+                    Sender sender = new Sender(requestPool);
+
                     @Override
                     public void run() {
-                        runnable.run();
+                        try {
+                            // getRequest与get(int)两个方法会抛出相同的异常
+                            Request request = sender.getRequest();
+                            System.out.println(Thread.currentThread().getName()
+                                                + " is construct request: "
+                                                + request.getURL());
+
+                            Response response = sender.get(timeout);
+                            System.out.println(Thread.currentThread().getName()
+                                    + " receive a response from: "
+                                    + request.getURL());
+
+                            add(response);
+                            System.out.println("Add Job, Job pool size now is: " + getSize());
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (PoolNotSufficientException e) {
+                            try {
+                                this.wait();
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
+                        } catch (PoolOverFlowException e) {
+                            this.notifyAll();
+                        }
                     }
                 });
             }
         }
 
-        public void initHandler(int size, CustomRunable runnable) {
-            System.out.println("Setting handler size is " + size + ".");
-            handlers = new Thread[size];
+        public void initHandler(CustomParser parser, HTMLParse htmlParser) {
+            System.out.println("Setting handler size is " + parsers + ".");
+            handlers = new Thread[parsers];
 
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < parsers; i++) {
                 senders[i] = new Thread(new Runnable() {
+                    Handler handler = new Handler(htmlParser);
+
                     @Override
                     public void run() {
-                        runnable.run();
+                        Response response = null;
+                        try {
+                            response = get();
+                            System.out.println(Thread.currentThread().getName()
+                                    + " is consume: " + response.getUrl());
+                            Response parseResponse = parser.run(response);
+                            handler.addItem(parseResponse);
+                            handler.handleItem();
+                            ArrayList<String> urls = parseResponse.getMeta().getUrls();
+
+                            if (parseResponse.getMeta().getUrls() != null) {
+                                urls.forEach(url-> {
+                                    try {
+                                        requestPool.add(new Request(url));
+                                    } catch (PoolOverFlowException e) {
+                                        try {
+                                            JobPool.this.wait();
+                                        } catch (InterruptedException e1) {
+                                            e1.printStackTrace();
+                                        }
+                                    } catch (ProtocolException | MalformedURLException e) {
+                                        e.printStackTrace();
+                                    }
+                                });
+                            };
+                        } catch (PoolNotSufficientException e) {
+                            try {
+                                this.wait();
+                            } catch (InterruptedException e1) {
+                                e1.printStackTrace();
+                            }
+                        } catch (NoPathFoundException e) {
+                           e.printStackTrace();
+                        }
                     }
                 });
             }
@@ -118,14 +178,14 @@ public class Pools {
         public void go() throws InterruptedException {
             System.out.println("Start tasks.");
 
-            for (int i = 0; i < senders.length; i++) {
-                senders[i].start();
-                senders[i].join(1000);
+            for (Thread sender : senders) {
+                sender.start();
+                sender.join(1000);
             }
 
-            for (int i = 0; i < handlers.length; i++) {
-                handlers[i].start();
-                handlers[i].join(1000);
+            for (Thread handler : handlers) {
+                handler.start();
+                handler.join(1000);
             }
         }
     }

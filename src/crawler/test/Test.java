@@ -1,12 +1,15 @@
 package crawler.test;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 public class Test {
     public static void main(String[] args) {
-        B b = new B();
-        System.out.println(b.get());
+//        B b = new B();
+//        System.out.println(b.get());
+        HashMap<String, String> map = new HashMap<>();
+        System.out.println(map.get("url"));
     }
 
 }

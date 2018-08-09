@@ -9,7 +9,10 @@ public class Settings {
     final public static String imgPath = ".";
     final public static int poolMaxHolding = 10;
     final public static int sleep = 1;
+    final public static int timeout = 5 * 1000;
     final public static HashMap<String, String> requestHead = new HashMap<>();
+    final public static int requests = 1;
+    final public static int parsers = 1;
 
     // 设置默认请求头
     static {

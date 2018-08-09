@@ -24,23 +24,23 @@ import org.jsoup.nodes.Document;
 import javax.swing.text.html.HTML;
 
 public class Handler extends Consumer<Response> implements HttpParserable, Store {
-    private Response response;
+    private Response response = null;
     private String path;
     private int length;
-    private HTMLParse parse = null;
+    private HTMLParse parser = null;
 
     {
         this.setPath(imgPath);
     }
 
-    public Handler(Response response) {
-        this.response = response;
+    public Handler(HTMLParse parser) {
+        this.parser = parser;
     }
 
     public Handler() {}
 
     public void setHTMLParse(HTMLParse p) {
-        parse = p;
+        parser = p;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
     public void storeInDB(Response response) {
         try {
             Document doc = Jsoup.parse(response.getInputStream(), "UTF-8", response.getUrl());
-            parse.parse(doc);
+            parser.parse(doc);
             System.out.println(doc.title());
         } catch (IOException e) {
             e.printStackTrace();

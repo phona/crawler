@@ -6,38 +6,39 @@ import crawler.impl.Handler;
 import crawler.impl.Sender;
 import crawler.util.CustomExceptions;
 import crawler.util.Pools;
+import crawler.util.Pools.JobPool;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 
 import static crawler.Settings.poolMaxHolding;
+import static crawler.util.CustomExceptions.*;
 import static crawler.util.Pools.RequestPool;
 
 public class Main {
     private static String begin = "http://jandan.net/ooxx";
 
-    public static void main(String[] args) throws IOException, CustomExceptions.InvalidURLException, CustomExceptions.NoPathFoundException {
+    // TODO: 需要设置，什么情况下会停止所有线程，还要注意处理，防止死锁
+    public static void main(String[] args) throws InterruptedException {
         // initialize
         RequestPool rpool = createRequestPool();
-        Sender sender = new Sender(rpool);
-
-        Pools.Pool<Response> handlePool = new Pools.Pool<Response>(10);
-
-        Handler handler = new Handler();
-        handler.setHTMLParse(doc -> {
-            doc.getElementsByTag("img");
+        JobPool jobPool = new JobPool(10);
+        jobPool.initialize(rpool);
+        jobPool.initHandler(response-> {
+            System.out.println();
+            return null;
+        }, doc-> {
+            System.out.println(doc.title());
         });
-
-        handler.addItem(sender.get(5 * 1000));
-        handler.handleItem();
+        jobPool.go();
     }
 
     private static RequestPool createRequestPool() {
         RequestPool Pool = new RequestPool(poolMaxHolding);
         try {
-            Pool.push(new Request(begin));
-        } catch (ProtocolException | MalformedURLException | CustomExceptions.PoolOverFlowException ex) {
+            Pool.add(new Request(begin));
+        } catch (ProtocolException | MalformedURLException | PoolOverFlowException ex) {
             ex.printStackTrace();
         }
         return Pool;

@@ -19,6 +19,20 @@ public class CustomExceptions {
         }
     }
 
+    public static class PoolNotSufficientException extends Exception {
+        private static final long serialVersionUID = 2L;
+
+        public PoolNotSufficientException(String msg) {
+            super(msg);
+        }
+
+        public PoolNotSufficientException() {}
+
+        public PoolNotSufficientException(Throwable t) {
+            super(t);
+        }
+    }
+
     public static class InvalidURLException extends Exception {
         private static final long serialVersionUID = 1L;
 

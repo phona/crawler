@@ -25,7 +25,7 @@ public class SenderTest {
         testReq.setRequestHeader("Accept-Language", "zh-CN");
         testReq.setRequestHeader("Charset", "UTF-8");
 
-        pool.push(testReq);
+        pool.add(testReq);
         Sender p = new Sender(pool);
         p.get(5 * 1000);
 

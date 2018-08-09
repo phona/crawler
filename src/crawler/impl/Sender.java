@@ -7,9 +7,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 
+import static crawler.util.CustomExceptions.*;
 import static crawler.util.Pools.RequestPool;
 import crawler.abstractmodels.Producer;
 import crawler.abstractmodels.CustomInterface.HttpRequestable;
+import crawler.util.CustomExceptions;
 import crawler.util.CustomExceptions.InvalidURLException;
 import crawler.util.CustomExceptions.PoolOverFlowException;
 import crawler.http.Request;
@@ -20,22 +22,26 @@ public class Sender extends Producer<Response> implements HttpRequestable {
     private HttpURLConnection conn;
     private InputStream input;
     private String url;
+    private Request request = null;
 
     public Sender(RequestPool pool) {
         this.pool = pool; 
     }
-    
-    public void addRequest(Request req) throws PoolOverFlowException {
-        this.pool.push(req);
+
+    public Request getRequest() throws PoolNotSufficientException {
+        request = request == null ? pool.get() : request;
+        return request;
     }
 
-    public Response get(int timeout) throws IOException, InvalidURLException {
-        get(pool.get(), timeout);
+    public Response get(int timeout) throws IOException, PoolNotSufficientException {
+        get(getRequest(), timeout);
+        request = null;
         return toConsume();
     }
     
-    public Response post(int timeout) throws IOException, InvalidURLException {
-        post(pool.get(), timeout);
+    public Response post(int timeout) throws IOException, PoolNotSufficientException {
+        post(getRequest(), timeout);
+        request = null;
         return toConsume();
     }
 
