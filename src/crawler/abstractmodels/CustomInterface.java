@@ -1,6 +1,7 @@
 package crawler.abstractmodels;
 
 import crawler.http.Request;
+import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 
@@ -15,11 +16,18 @@ public class CustomInterface {
         public int bufferSize = 1024;
     }
 
-    public static abstract interface Storeable {
-        public abstract void store();
+    @FunctionalInterface
+    public static interface HTMLParse {
+        public void parse(Document doc);
+    }
 
-        public abstract void storeInDB();
+    public static interface Store {
+        void store();
 
-        public abstract void storeAsFile(String storePath);
+        void storeAsFile(String storePath);
+    }
+
+    public static interface CustomRunable {
+        void run();
     }
 }

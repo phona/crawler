@@ -7,7 +7,7 @@ import crawler.http.Response;
 import crawler.http.Request;
 
 public class HandlerTest {
-    public static String testUrl = "http://mm.chinasareview.com/wp-content/uploads/2017a/04/18/01.jpg";
+    public static String testUrl = "http://www.meizitu.com/a/5530.html";
 
     public static void main(String[] args) throws Exception {
         Request testReq = new Request(testUrl);
@@ -30,7 +30,6 @@ public class HandlerTest {
         // System.out.println(r.getContentLength());
         // System.out.println(r.getContentType().indexOf("image"));
         Handler handler = new Handler(p.toConsume());
-        handler.setPath(".");
         handler.handleItem();
     }
 }

@@ -29,12 +29,14 @@ public class Sender extends Producer<Response> implements HttpRequestable {
         this.pool.push(req);
     }
 
-    public void get(int timeout) throws IOException, InvalidURLException {
+    public Response get(int timeout) throws IOException, InvalidURLException {
         get(pool.get(), timeout);
+        return toConsume();
     }
     
-    public void post(int timeout) throws IOException, InvalidURLException {
+    public Response post(int timeout) throws IOException, InvalidURLException {
         post(pool.get(), timeout);
+        return toConsume();
     }
 
     /**
@@ -58,7 +60,6 @@ public class Sender extends Producer<Response> implements HttpRequestable {
         } catch (InvalidURLException ex) {
             ex.printStackTrace();
         }
-
         input = conn.getInputStream();
     }
 

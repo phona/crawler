@@ -8,7 +8,7 @@ import java.sql.Statement;
 import java.util.ArrayDeque;
 import java.util.Collection;
 
-public class DB {
+public class DB <E> {
     private Connection conn = null;
     private Statement stmt = null;
     private ResultSet rs = null;
@@ -23,7 +23,13 @@ public class DB {
         querys.add(query);
     }
 
-    public <E> void commit(Collection<E> collection, DataParse dataParse) {
+    /**
+     *
+     * @param collection 如果不需要可以传一个null
+     * @param dataParse
+     * @param <E>
+     */
+    public void commit(Object store, crawler.db.DataParse dataParse) {
         try {
             conn = ds.getConnection();
             conn.setAutoCommit(false);

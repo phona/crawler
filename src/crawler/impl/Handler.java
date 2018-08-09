@@ -7,22 +7,41 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
 
-import static crawler.abstractmodels.CustomInterface.Storeable;
+import static crawler.Settings.imgPath;
+import static crawler.abstractmodels.CustomInterface.Store;
 import static crawler.abstractmodels.CustomInterface.HttpParserable;
+
+import crawler.Settings;
 import crawler.abstractmodels.Consumer;
+import crawler.abstractmodels.CustomInterface;
+import crawler.abstractmodels.CustomInterface.HTMLParse;
+import crawler.db.SQLBuilder;
 import crawler.util.CustomExceptions.NoPathFoundException;
 import crawler.http.Response;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
-public class Handler extends Consumer<Response> implements HttpParserable, Storeable {
+import javax.swing.text.html.HTML;
+
+public class Handler extends Consumer<Response> implements HttpParserable, Store {
     private Response response;
     private String path;
     private int length;
+    private HTMLParse parse = null;
+
+    {
+        this.setPath(imgPath);
+    }
 
     public Handler(Response response) {
         this.response = response;
     }
 
     public Handler() {}
+
+    public void setHTMLParse(HTMLParse p) {
+        parse = p;
+    }
 
     @Override
     public void addItem(Response response) {
@@ -41,7 +60,7 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
             // System.out.println(fileType);
             storeAsFile(path + "/" + encrypt(response.getUrl()) + fileType);
         } else {
-            storeInDB();
+            storeInDB(response);
         }
     }
 
@@ -53,13 +72,20 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
         return this.path;
     }
 
+    @Override
     public void store() {
 
     }
 
-    @Override
-    public void storeInDB() {
-
+    public void storeInDB(Response response) {
+        try {
+            Document doc = Jsoup.parse(response.getInputStream(), "UTF-8", response.getUrl());
+            parse.parse(doc);
+            System.out.println(doc.title());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println(SQLBuilder.select().from("main_channel").getSQL());
     }
 
     @Override
@@ -72,12 +98,12 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
             int hasRead = 0;
             while ((hasRead = response.getInputStream().read(buffer)) != -1) {
                 file.write(buffer, 0, hasRead);
-                length += hasRead;
+                this.length += hasRead;
             }
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            length = 0;
+            this.length = 0;
             try {
                 response.getInputStream().close();
             } catch (IOException e) {

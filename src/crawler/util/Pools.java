@@ -1,35 +1,42 @@
 package crawler.util;
 
-import java.util.ArrayList;
-
-import crawler.util.CustomExceptions.PoolOverFlowException;
-import crawler.util.CustomExceptions.InvalidURLException;
+import crawler.abstractmodels.CustomInterface.CustomRunable;
 import crawler.http.Request;
+import crawler.http.Response;
+import crawler.impl.Handler;
+import crawler.impl.Sender;
+import crawler.util.CustomExceptions.PoolOverFlowException;
+
+import java.util.ArrayDeque;
 
 public class Pools {
     /**
      * @category Pools
      */
-    public static abstract class Pool <E>{
-        private ArrayList<E> arr;
+    public static class Pool <E>{
+        private ArrayDeque<E> arr;
         private final int size;
 
         public Pool(int size) {
-            this.arr = new ArrayList<>(size); 
+            this.arr = new ArrayDeque<>(size);
             this.size = size;
         }
 
-        public ArrayList<E> getArr() {
-            return arr;
-        }
-
         public int getSize() {
-            return size;
+            return arr.size();
         }
 
-        public abstract E get();
+        public synchronized void add(E e) throws PoolOverFlowException {
+            if (this.arr.size() < size) {
+                this.arr.add(e);
+            } else {
+                throw new PoolOverFlowException();
+            }
+        }
 
-        public abstract void push(E url) throws PoolOverFlowException;
+        public synchronized E get() {
+            return this.arr.poll();
+        };
     }
 
     /**
@@ -43,15 +50,15 @@ public class Pools {
 
         public synchronized Request get() {
             try {
-                return getArr().remove(0);
+                return get();
             } catch (IndexOutOfBoundsException ex) {
                 return null;
             }
         }
 
         public synchronized void push(Request req) throws PoolOverFlowException {
-            if (getArr().size() < getSize()) {
-                getArr().add(req); 
+            if (getSize() < getSize()) {
+                add(req);
             } else {
                 throw new PoolOverFlowException("The pool is full, can push item anymore.");
             }
@@ -61,24 +68,64 @@ public class Pools {
     /**
      * 用于生产者与消费者之间的通信
      */
-    public static class PipePool extends Pool<String> {
-        public PipePool(int size) {
-            super(size);
-        } 
+    public static class JobPool extends Pool<Response> {
+        private Sender sender;
+        private Handler handler;
+        private Thread[] senders;
+        private Thread[] handlers;
 
-        public synchronized String get() {
-            try {
-                return getArr().remove(0);
-            } catch (IndexOutOfBoundsException ex) {
-                return null;
+        /**
+         * 设置job队列上限
+         * @param size
+         */
+        public JobPool(int size) {
+            super(size);
+        }
+
+        public void setPeers(Sender sender, Handler handler) {
+            this.sender = sender;
+            this.handler = handler;
+        }
+
+        public void initSenders(int size, CustomRunable runnable) {
+            System.out.println("Setting Sender size is " + size + ".");
+            senders = new Thread[size];
+
+            for (int i = 0; i < size; i++) {
+                senders[i] = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        runnable.run();
+                    }
+                });
             }
         }
 
-        public synchronized void push(String url) throws PoolOverFlowException {
-            if (getArr().size() < getSize()) {
-                getArr().add(url); 
-            } else {
-                throw new PoolOverFlowException("The pool is full, can push item anymore.");
+        public void initHandler(int size, CustomRunable runnable) {
+            System.out.println("Setting handler size is " + size + ".");
+            handlers = new Thread[size];
+
+            for (int i = 0; i < size; i++) {
+                senders[i] = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        runnable.run();
+                    }
+                });
+            }
+        }
+
+        public void go() throws InterruptedException {
+            System.out.println("Start tasks.");
+
+            for (int i = 0; i < senders.length; i++) {
+                senders[i].start();
+                senders[i].join(1000);
+            }
+
+            for (int i = 0; i < handlers.length; i++) {
+                handlers[i].start();
+                handlers[i].join(1000);
             }
         }
     }

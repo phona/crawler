@@ -7,10 +7,20 @@ import java.net.ProtocolException;
 import java.net.URL;
 import java.util.HashMap;
 
+import static crawler.Settings.requestHead;
+
+/**
+ * 定义一个Request对象
+ *
+ */
 public class Request {
     private URL url;
     private HashMap<String, String> headers = new HashMap<>();
     private HashMap<String, String> datas = new HashMap<>();
+
+    {
+        headers.putAll(requestHead);
+    }
 
     public Request(String url) throws ProtocolException, MalformedURLException{
         this.url = new URL(url);

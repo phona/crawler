@@ -5,12 +5,20 @@ import java.util.LinkedList;
 
 public class Test {
     public static void main(String[] args) {
-        LinkedList a = new LinkedList();
-        testType(a);
+        B b = new B();
+        System.out.println(b.get());
     }
 
-    public static void testType(Collection c) {
-        Class clazz = c.getClass();
-        System.out.println(clazz);
+}
+
+class A {
+    private int a = 1;
+
+    public int get() {
+        return a;
     }
+}
+
+class B extends A {
+
 }
