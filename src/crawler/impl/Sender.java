@@ -28,18 +28,18 @@ public class Sender extends Producer<Response> implements HttpRequestable {
         this.pool = pool; 
     }
 
-    public Request getRequest() throws PoolNotSufficientException {
+    public Request getRequest() throws InterruptedException {
         request = request == null ? pool.get() : request;
         return request;
     }
 
-    public Response get(int timeout) throws IOException, PoolNotSufficientException {
+    public Response get(int timeout) throws IOException, InterruptedException {
         get(getRequest(), timeout);
         request = null;
         return toConsume();
     }
     
-    public Response post(int timeout) throws IOException, PoolNotSufficientException {
+    public Response post(int timeout) throws IOException, InterruptedException {
         post(getRequest(), timeout);
         request = null;
         return toConsume();

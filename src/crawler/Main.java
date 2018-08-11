@@ -1,19 +1,12 @@
 package crawler;
 
 import crawler.http.Request;
-import crawler.http.Response;
-import crawler.impl.Handler;
-import crawler.impl.Sender;
-import crawler.util.CustomExceptions;
-import crawler.util.Pools;
 import crawler.util.Pools.JobPool;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 
 import static crawler.Settings.poolMaxHolding;
-import static crawler.util.CustomExceptions.*;
 import static crawler.util.Pools.RequestPool;
 
 public class Main {
@@ -26,8 +19,8 @@ public class Main {
         JobPool jobPool = new JobPool(10);
         jobPool.initialize(rpool);
         jobPool.initHandler(response-> {
-            System.out.println();
-            return null;
+            System.out.println(response.getUrl());
+            return response;
         }, doc-> {
             System.out.println(doc.title());
         });
@@ -38,7 +31,7 @@ public class Main {
         RequestPool Pool = new RequestPool(poolMaxHolding);
         try {
             Pool.add(new Request(begin));
-        } catch (ProtocolException | MalformedURLException | PoolOverFlowException ex) {
+        } catch (ProtocolException | MalformedURLException | InterruptedException ex) {
             ex.printStackTrace();
         }
         return Pool;

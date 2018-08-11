@@ -29,7 +29,7 @@ public class HandlerTest {
         Response r = p.toConsume();
         // System.out.println(r.getContentLength());
         // System.out.println(r.getContentType().indexOf("image"));
-        Handler handler = new Handler(p.toConsume());
-        handler.handleItem();
+        // Handler handler = new Handler(p.toConsume());
+        // handler.handleItem();
     }
 }
