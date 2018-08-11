@@ -1,16 +1,17 @@
 package crawler;
 
-import crawler.http.Request;
-import crawler.util.Pools.JobPool;
 import org.jsoup.select.Elements;
 
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 
+import crawler.http.Request;
+import crawler.pools.JobPool;
+import crawler.pools.RequestPool;
 import static crawler.Settings.poolMaxHolding;
-import static crawler.util.Pools.RequestPool;
 
 public class Main {
 
@@ -25,11 +26,17 @@ public class Main {
         jobPool.initHandler(response-> {
             System.out.println(response.getUrl());
             return response;
-        }, doc-> {
+        }, (response, doc)-> {
+            ArrayList<String> arr = new ArrayList<>();
             Elements imgHashs = doc.getElementsByClass("img-hash");
+
             imgHashs.forEach(content -> {
-                System.out.println(new String(decoder.decode(content.text())));
+                String tmp = "http:" + new String(decoder.decode(content.text()));
+                arr.add(tmp);
+                System.out.println(tmp);
             });
+
+//            response.getMeta().setUrls(arr);
         });
         jobPool.go();
     }

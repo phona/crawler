@@ -1,14 +1,12 @@
 package crawler.test;
 
-import crawler.util.Pools.Pool;
-
 public class PoolTest {
     public static void main(String[] args) throws Exception {
         Pool<Integer> pool = new Pool<>(10);
 
         for (int i = 0; i < 5; i++) {
             new Thread(()->{
-                for (int j = 0; j < 1; j++) {
+                for (int j = 0; j < 20; j++) {
                     try {
                         pool.add(j);
                         System.out.println(Thread.currentThread().getName() + " add " + j + " to the pool");
@@ -19,7 +17,7 @@ public class PoolTest {
             }).start();
         }
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 1; i++) {
             new Thread(()->{
                 while (!pool.isEmpty()) {
                     try {
@@ -27,9 +25,6 @@ public class PoolTest {
                         System.out.println(Thread.currentThread().getName() + " get " + item + " from the pool");
                         pool.taskDone();
 
-                        if (pool.isEmpty()) {
-                            break;
-                        }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }

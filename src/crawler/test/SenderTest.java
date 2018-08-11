@@ -1,6 +1,6 @@
 package crawler.test;
 
-import static crawler.util.Pools.RequestPool;
+import crawler.pools.RequestPool;
 import crawler.impl.Sender;
 import crawler.http.Request;
 import crawler.http.Response;

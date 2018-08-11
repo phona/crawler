@@ -3,6 +3,7 @@ package crawler.impl;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
@@ -76,8 +77,8 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
     public void storeInDB(Response response) {
         try {
             Document doc = Jsoup.parse(response.getInputStream(), "UTF-8", response.getUrl());
-            parser.parse(doc);
             System.out.println(doc.title());
+            parser.parse(response, doc);
         } catch (IOException e) {
             e.printStackTrace();
         }

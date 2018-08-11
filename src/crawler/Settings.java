@@ -1,17 +1,19 @@
 package crawler;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 /**
  * 系统参数配置
  */
 public class Settings {
-    final public static String imgPath = "./images";
+    final public static String imgPath = Paths.get(System.getProperty("user.dir"), "images").toAbsolutePath().toString();
     final public static int poolMaxHolding = 10;
     final public static int sleep = 1;
     final public static int timeout = 5 * 1000;
     final public static HashMap<String, String> requestHead = new HashMap<>();
-    final public static int requests = 1;
+    final public static int requests = 5;
     final public static int parsers = 1;
 
     // 设置默认请求头

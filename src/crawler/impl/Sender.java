@@ -7,13 +7,10 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 
-import static crawler.util.CustomExceptions.*;
-import static crawler.util.Pools.RequestPool;
+import crawler.pools.RequestPool;
 import crawler.abstractmodels.Producer;
 import crawler.abstractmodels.CustomInterface.HttpRequestable;
-import crawler.util.CustomExceptions;
 import crawler.util.CustomExceptions.InvalidURLException;
-import crawler.util.CustomExceptions.PoolOverFlowException;
 import crawler.http.Request;
 import crawler.http.Response;
 

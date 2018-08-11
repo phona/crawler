@@ -20,7 +20,7 @@ public class CustomInterface {
 
     @FunctionalInterface
     public static interface HTMLParse {
-        public void parse(Document doc);
+        void parse(Response response, Document doc);
     }
 
     public static interface Store {
