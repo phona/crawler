@@ -11,17 +11,13 @@ import static crawler.Settings.imgPath;
 import static crawler.abstractmodels.CustomInterface.Store;
 import static crawler.abstractmodels.CustomInterface.HttpParserable;
 
-import crawler.Settings;
 import crawler.abstractmodels.Consumer;
-import crawler.abstractmodels.CustomInterface;
 import crawler.abstractmodels.CustomInterface.HTMLParse;
 import crawler.db.SQLBuilder;
 import crawler.util.CustomExceptions.NoPathFoundException;
 import crawler.http.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-
-import javax.swing.text.html.HTML;
 
 public class Handler extends Consumer<Response> implements HttpParserable, Store {
     private Response response = null;
@@ -44,7 +40,7 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
     }
 
     @Override
-    public void addItem(Response response) {
+    public void setItem(Response response) {
         this.response = response;
     }
 
@@ -119,9 +115,7 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
             crypt.reset();
             crypt.update(str.getBytes("UTF-8"));
             sha1 = byteToHex(crypt.digest());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return sha1;

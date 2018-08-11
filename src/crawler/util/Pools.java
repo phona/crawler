@@ -49,7 +49,9 @@ public class Pools {
             lock.lock();
             if (notFinishedSize() < getMaxSize()) {
                 _add(e);
+                unfinished++;
             } else {
+                notFull.signal();
                 notEmpty.await();
             }
             notFull.signal();
@@ -61,13 +63,12 @@ public class Pools {
             lock.lock();
             try {
                 E item;
-                if (pool.size() > notFinishedSize()) {
+                if (getSize() > 0) {
                     item = _get();
                 } else {
                     notFull.await();
                     item = _get();
                 }
-                unfinished++;
                 notEmpty.signal();
                 return item;
             } finally {
@@ -78,11 +79,12 @@ public class Pools {
         public void taskDone() {
             lock.lock();
             try {
-                int unfinishedTask = unfinished - 1;
+                int unfinishedTask = notFinishedSize() - 1;
                 if (unfinishedTask <= 0) {
                     if (unfinishedTask < 0) throw new IndexOutOfBoundsException("Too many taskDone was called.");
                 }
                 this.unfinished = unfinishedTask;
+                System.out.println("Consume a task. Left tasks: " + unfinished);
                 allTaskDone.signalAll();
             } finally {
                 lock.unlock();
@@ -92,18 +94,19 @@ public class Pools {
         public boolean isEmpty() {
             lock.lock();
             try {
-                return !(_size() > 0);
+                return _size() == 0;
             } finally {
                 lock.unlock();
             }
         }
 
         public void join() throws InterruptedException {
-            while (notFinishedSize() > 0 || getSize() > 0) {
-                lock.lock();
+            lock.lock();
+            while (unfinished > 0) {
+                System.out.println("NotFinishedSize: " + notFinishedSize() + " Size: " + getSize());
                 allTaskDone.await();
-                lock.unlock();
             }
+            lock.unlock();
         }
 
         /**
@@ -119,13 +122,8 @@ public class Pools {
             }
         }
 
-        public int getMaxSize() {
-            lock.lock();
-            try {
-                return size;
-            } finally {
-                lock.unlock();
-            }
+        int getMaxSize() {
+            return size;
         }
 
         public int getSize() {
@@ -173,10 +171,11 @@ public class Pools {
         private RequestPool requestPool;
         private Thread[] senders;
         private Thread[] handlers;
+        private boolean flag = false;
 
         /**
          * 设置job队列上限
-         * @param size
+         * @param size int
          */
         public JobPool(int size) {
             super(size);
@@ -197,24 +196,29 @@ public class Pools {
 
                     @Override
                     public void run() {
-                        try {
-                            // getRequest与get(int)两个方法会抛出相同的异常
-                            Request request = sender.getRequest();
-                            System.out.println(Thread.currentThread().getName()
+                        while (!requestPool.isEmpty()) {
+                            try {
+                                // getRequest与get(int)两个方法会抛出相同的异常
+                                Request request = sender.getRequest();
+                                System.out.println(
+                                        Thread.currentThread().getName()
                                                 + " is construct request: "
                                                 + request.getURL());
 
-                            Response response = sender.get(timeout);
-                            System.out.println(Thread.currentThread().getName()
-                                    + " receive a response from: "
-                                    + request.getURL());
+                                Response response = sender.get(timeout);
+                                System.out.println(
+                                        Thread.currentThread().getName()
+                                                + " receive a response from: "
+                                                + request.getURL());
 
-                            add(response);
-                            System.out.println("Add Job, Job pool size now is: " + notFinishedSize());
+                                add(response);
+                                System.out.println("Add Job, Job pool size now is: " + notFinishedSize());
 
-                        } catch (IOException | InterruptedException e) {
-                            e.printStackTrace();
+                            } catch (IOException | InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
+                        JobPool.this.flag = true;
                     }
                 });
             }
@@ -231,30 +235,34 @@ public class Pools {
                     @Override
                     public void run() {
                         Response response;
-                        try {
-                            response = get();
-                            System.out.println(Thread.currentThread().getName()
-                                    + " is consume: " + response.getUrl());
-                            Response parseResponse = parser.run(response);
-                            handler.addItem(parseResponse);
-                            handler.handleItem();
-                            ArrayList<String> urls = parseResponse.getMeta().getUrls();
+                        while (!JobPool.this.flag) {
+                            try {
+                                response = get();
+                                System.out.println(Thread.currentThread().getName() + " is consume: " + response.getUrl());
+                                Response parseResponse = parser.run(response);
+                                handler.setItem(parseResponse);
+                                handler.handleItem();
+                                ArrayList<String> urls = parseResponse.getMeta().getUrls();
 
-                            if (parseResponse.getMeta().getUrls() != null) {
-                                urls.forEach(url-> {
-                                    try {
-                                        requestPool.add(new Request(url));
-                                    } catch (ProtocolException | MalformedURLException e) {
-                                        e.printStackTrace();
-                                        System.out.println(parseResponse.getUrl());
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                });
+                                if (parseResponse.getMeta().getUrls() != null) {
+                                    urls.forEach(url-> {
+                                        try {
+                                            requestPool.add(new Request(url));
+                                        } catch (ProtocolException | MalformedURLException e) {
+                                            e.printStackTrace();
+                                            System.out.println(parseResponse.getUrl());
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                    });
+                                }
+                            } catch (NoPathFoundException | InterruptedException e) {
+                                e.printStackTrace();
+                            } finally {
+                                requestPool.taskDone();
                             }
-                        } catch (NoPathFoundException | InterruptedException e) {
-                           e.printStackTrace();
                         }
+                        System.out.println("Handler done.");
                     }
                 });
             }
@@ -271,7 +279,7 @@ public class Pools {
                 handler.start();
             }
 
-            join();
+            requestPool.join();
         }
     }
 }

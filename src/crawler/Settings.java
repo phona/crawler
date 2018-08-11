@@ -6,7 +6,7 @@ import java.util.HashMap;
  * 系统参数配置
  */
 public class Settings {
-    final public static String imgPath = ".";
+    final public static String imgPath = "./images";
     final public static int poolMaxHolding = 10;
     final public static int sleep = 1;
     final public static int timeout = 5 * 1000;
