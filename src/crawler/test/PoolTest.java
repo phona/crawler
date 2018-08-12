@@ -1,5 +1,7 @@
 package crawler.test;
 
+import crawler.pools.Pool;
+
 public class PoolTest {
     public static void main(String[] args) throws Exception {
         Pool<Integer> pool = new Pool<>(10);

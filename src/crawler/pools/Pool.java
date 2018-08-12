@@ -52,6 +52,7 @@ public class Pool <E> {
                 item = _get();
             } else {
                 while (!(_size() > 0)) notFull.await();
+                System.out.println(321);
                 item = _get();
             }
             notEmpty.signal();
@@ -71,6 +72,24 @@ public class Pool <E> {
             this.unfinished = unfinishedTask;
             System.out.println("Consume a task. Left tasks: " + unfinished);
             allTaskDone.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean isFull() {
+        lock.lock();
+        try {
+            return size <= _size();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public boolean hasItems() {
+        lock.lock();
+        try {
+            return _size() > 0;
         } finally {
             lock.unlock();
         }

@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.UnknownHostException;
 
 import crawler.pools.RequestPool;
 import crawler.abstractmodels.Producer;
@@ -14,44 +15,37 @@ import crawler.util.CustomExceptions.InvalidURLException;
 import crawler.http.Request;
 import crawler.http.Response;
 
-public class Sender extends Producer<Response> implements HttpRequestable {
-    private RequestPool pool;
+public class Sender extends Producer<Response> {
     private HttpURLConnection conn;
-    private InputStream input;
     private String url;
-    private Request request = null;
-
-    public Sender(RequestPool pool) {
-        this.pool = pool; 
-    }
-
-    public Request getRequest() throws InterruptedException {
-        request = request == null ? pool.get() : request;
-        return request;
-    }
-
-    public Response get(int timeout) throws IOException, InterruptedException {
-        get(getRequest(), timeout);
-        request = null;
-        return toConsume();
-    }
-    
-    public Response post(int timeout) throws IOException, InterruptedException {
-        post(getRequest(), timeout);
-        request = null;
-        return toConsume();
-    }
+    private InputStream input;
+    private Request request;
+    private int timeout;
 
     /**
      * 当请求成功后，通过这个方法获取返回的数据
      */
+    public Sender(Request request, int timeout) {
+        this.request = request;
+        this.timeout = timeout;
+    }
+
     @Override
     public Response toConsume() {
         return new Response(url, conn.getContentLength(), conn.getContentType(), 1024, input);
     }
 
-    @Override
-    public void get(Request req, int timeout) throws IOException {
+    public Response get() throws IOException {
+        _get(request, timeout);
+        return toConsume();
+    }
+
+    public Response post() throws IOException {
+        _post(request, timeout);
+        return toConsume();
+    }
+
+    private void _get(Request req, int timeout) throws IOException {
         String queryString = req.getQueryString();
         url = req.getURL();
         try {
@@ -63,10 +57,14 @@ public class Sender extends Producer<Response> implements HttpRequestable {
         } catch (InvalidURLException ex) {
             ex.printStackTrace();
         }
-        input = conn.getInputStream();
+        try {
+            input = conn.getInputStream();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void prepareParams(Request req, String method, int timeout) 
+    private void prepareParams(Request req, String method, int timeout)
             throws InvalidURLException, IOException {
         try {
             conn = req.getConnection();
@@ -79,8 +77,7 @@ public class Sender extends Producer<Response> implements HttpRequestable {
         }
     }
 
-    @Override
-    public void post(Request req, int timeout) throws IOException {
+    private void _post(Request req, int timeout) throws IOException {
         conn = req.getConnection();
         url = req.getURL();
         conn.setDoOutput(true);

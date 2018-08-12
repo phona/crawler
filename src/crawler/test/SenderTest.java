@@ -26,13 +26,13 @@ public class SenderTest {
         testReq.setRequestHeader("Charset", "UTF-8");
 
         pool.add(testReq);
-        Sender p = new Sender(pool);
-        p.get(5 * 1000);
+//        Sender p = new Sender(pool);
+//        p.get(5 * 1000);
 
         // htmlTest(p.toConsume().getInputStream());
-        Response r = p.toConsume();
-        System.out.println(r.getContentType());
-        System.out.println(r.getContentLength());
+//        Response r = p.toConsume();
+//        System.out.println(r.getContentType());
+//        System.out.println(r.getContentLength());
     }
 
     public static void htmlTest(InputStream input) {

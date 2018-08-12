@@ -22,10 +22,10 @@ public class HandlerTest {
         testReq.setRequestHeader("Charset", "UTF-8");
 
         pool.add(testReq);
-        Sender p = new Sender(pool);
-        p.get(5 * 1000);
+//        Sender p = new Sender(pool);
+//        p.get(5 * 1000);
 
-        Response r = p.toConsume();
+//        Response r = p.toConsume();
         // System.out.println(r.getContentLength());
         // System.out.println(r.getContentType().indexOf("image"));
         // Handler handler = new Handler(p.toConsume());

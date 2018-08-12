@@ -1,5 +1,7 @@
 package crawler;
 
+import crawler.http.Response;
+import crawler.pools.ResponsePool;
 import org.jsoup.select.Elements;
 
 import java.net.MalformedURLException;
@@ -9,7 +11,7 @@ import java.util.Base64;
 import java.util.Base64.Decoder;
 
 import crawler.http.Request;
-import crawler.pools.JobPool;
+import crawler.impl.JobPool;
 import crawler.pools.RequestPool;
 import static crawler.Settings.poolMaxHolding;
 

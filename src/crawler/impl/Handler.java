@@ -53,8 +53,6 @@ public class Handler extends Consumer<Response> implements HttpParserable, Store
 
         if (response.getContentType().contains("image")) {
             String fileType = response.getUrl().substring(response.getUrl().lastIndexOf("."));
-            // todo: 不知道是否能从对象内部获取到外部的变量
-            // System.out.println(fileType);
             storeAsFile(path + "/" + encrypt(response.getUrl()) + fileType);
         } else {
             storeInDB(response);
